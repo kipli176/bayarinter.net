@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cetak Struk</title>
+    <style>
+        body {
+            font-family: monospace;
+            width: 300px;
+            font-size: 12px;
+        }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .line { border-top: 1px dashed #000; margin: 5px 0; }
+    </style>
+</head>
+<body onload="window.print()">
+
+<div class="center bold">STRUK PEMBAYARAN</div>
+<div class="line"></div>
+
+Nama  : {{ data.nama }}<br>
+No HP : {{ data.no_hp }}<br>
+Bulan : {{ data.bulan }}<br>
+Status: {{ data.status }}<br>
+Petugas: {{ data.petugas or '-' }}<br>
+
+<div class="line"></div>
+<b>RINCIAN PEMBAYARAN</b><br>
+{% for r in riwayat %}
+- {{ r.tanggal_bayar }}: {{ '{:,.0f}'.format(r.jumlah_bayar) }}<br>
+{% endfor %}
+<div class="line"></div>
+
+Total Bayar: {{ '{:,.0f}'.format(data.total_bayar or 0) }}<br>
+Tagihan    : {{ '{:,.0f}'.format(data.jumlah_tagihan or 0) }}<br>
+Sisa       : {{ '{:,.0f}'.format((data.jumlah_tagihan or 0) - (data.total_bayar or 0)) }}<br>
+
+<div class="line"></div>
+<div class="center">Terima kasih</div>
+
+</body>
+</html>

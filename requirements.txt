@@ -1,0 +1,5 @@
+Flask>=2.0
+requests>=2.25
+werkzeug>=2.0
+routeros_api>=0.15.0
+python-dotenv

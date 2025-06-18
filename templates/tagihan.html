@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Daftar Tagihan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <script src="https://unpkg.com/flowbite@2.2.1/dist/flowbite.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen font-sans">
+  <div class="max-w-7xl mx-auto py-10 px-4">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold text-blue-700">Daftar Tagihan - {{ bulan }}</h1>
+      <div class="text-sm text-right">
+        <p>Login sebagai: <strong>{{ session.admin_username }}</strong></p>
+        <a href="{{ url_for('auth.logout') }}" class="text-red-600 hover:underline">Logout</a>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="space-y-2 mb-6">
+        {% for category, message in messages %}
+          <div class="p-3 rounded text-sm 
+                      {% if category == 'error' %}
+                        bg-red-100 text-red-700
+                      {% elif category == 'success' %}
+                        bg-green-100 text-green-700
+                      {% else %}
+                        bg-blue-100 text-blue-700
+                      {% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+    <!-- Filter Bulan -->
+    <form method="get" action="{{ url_for('tagihan.tagihan') }}" class="mb-6">
+      <label for="bulan" class="block text-sm font-medium text-gray-700 mb-1">Pilih Bulan:</label>
+      <select name="bulan" id="bulan"
+              class="w-full md:w-1/3 px-3 py-2 border rounded-md"
+              onchange="this.form.submit()">
+        {% for b in bulan_options %}
+          <option value="{{ b }}" {% if b == bulan %}selected{% endif %}>{{ b }}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <!-- Tabel Tagihan -->
+    <div class="overflow-auto">
+      <table class="min-w-full bg-white rounded-lg shadow text-sm display" id="tabelTagihan">
+        <thead class="bg-gray-100">
+          <tr class="text-left text-gray-700 font-semibold">
+            <th class="px-4 py-2">#</th>
+            <th class="px-4 py-2">Nama</th>
+            <th class="px-4 py-2">Paket</th>
+            <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2 text-right">Tagihan</th>
+            <th class="px-4 py-2">Bayar </th>
+            <th class="px-4 py-2 text-right">Dibayar</th>
+            <th class="px-4 py-2 text-right">Sisa</th>
+            <th class="px-4 py-2 text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in data %}
+          <tr class="border-t">
+            <td class="px-4 py-2"></td>
+            <td class="px-4 py-2">{{ item.nama }}</td>
+            <td class="px-4 py-2">{{ item.paket }}</td>
+            <td class="px-4 py-2">{{ item.status_pelanggan_terkini }}</td>
+            <td class="px-4 py-2 text-right">{{ '{:,.2f}'.format(item.jumlah_tagihan or 0) }}</td>
+            <td class="px-4 py-2">
+              <span class="{% if item.status_pembayaran == 'lunas' %}text-green-600{% elif item.status_pembayaran == 'belum lunas' %}text-red-600{% else %}text-yellow-600{% endif %}">
+                {{ item.status_pembayaran }}
+              </span>
+            </td>
+            <td class="px-4 py-2 text-right">{{ '{:,.2f}'.format(item.total_bayar or 0) }}</td>
+            <td class="px-4 py-2 text-right">{{ '{:,.2f}'.format(item.sisa_tagihan or 0) }}</td>
+            <td class="px-4 py-2 text-center space-x-1">
+              {% if item.status_pembayaran in ['belum lunas', 'cicil'] %}
+              <!-- ✅ Tombol Kirim Notifikasi -->
+              <form method="POST" action="{{ url_for('tagihan.kirim_notifikasi') }}"
+                    class="inline"
+                    onsubmit="return confirm('Kirim notifikasi tagihan ke {{ item.nama }}?');">
+                <input type="hidden" name="id_tagihan" value="{{ item.id_tagihan }}">
+                <button type="submit" title="Kirim WA"
+                        class="text-indigo-600 hover:scale-110 transition">📲</button>
+              </form>
+              <a href="#" class="text-blue-600 hover:scale-110 transition"
+              data-modal-target="modalBayar" data-modal-toggle="modalBayar"
+              data-id="{{ item.id_tagihan }}"
+              data-nama="{{ item.nama }}"
+              data-tagihan="{{ '{:,.2f}'.format(item.jumlah_tagihan or 0) }}"
+              title="Bayar">💵</a>           
+                <a href="{{ url_for('tagihan.cetak_pembayaran', id_tagihan=item.id_tagihan) }}"
+                   class="inline-block text-green-600 hover:scale-110 transition" title="Cetak">🧾</a>
+              {% elif item.status_pembayaran == 'lunas' %}
+                <a href="{{ url_for('tagihan.cetak_pembayaran', id_tagihan=item.id_tagihan) }}"
+                   class="inline-block text-green-600 hover:scale-110 transition" title="Cetak">🧾</a>
+              {% else %}
+                <span class="text-gray-400">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-6">
+      <a href="{{ url_for('admin.index') }}" class="text-blue-600 hover:underline">← Kembali ke Dashboard</a>
+    </div>
+  </div>
+  <div id="modalBayar" tabindex="-1" aria-hidden="true"
+  class="hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-center w-full p-4 overflow-x-hidden overflow-y-auto h-screen bg-black bg-opacity-40">
+<div class="relative w-full max-w-md">
+ <div class="relative bg-white rounded-lg shadow p-6">
+   <button type="button" class="absolute top-3 right-3 text-gray-400 hover:text-red-600"
+           data-modal-hide="modalBayar">✖️</button>
+   <h3 class="text-xl font-semibold text-gray-800 mb-4">💰 Pembayaran</h3>
+
+   <form id="formBayar" method="post" class="space-y-4">
+     <input type="hidden" name="id_tagihan" id="modalIdTagihan">
+     <p class="text-sm text-gray-700">Pelanggan: <strong id="modalNama"></strong></p>
+     <p class="text-sm text-gray-700">Jumlah Tagihan: <strong id="modalTagihan"></strong></p>
+
+     <div>
+       <label class="block mb-1 text-sm font-medium text-gray-700">Jumlah Bayar</label>
+       <input type="number" name="jumlah_bayar" step="0.01" min="0.01" required
+              class="w-full px-3 py-2 border rounded-md focus:ring focus:ring-blue-200">
+     </div>
+
+     <div class="flex justify-end gap-2">
+       <button type="submit"
+               class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
+         ✅ Bayar Sekarang
+       </button>
+       <button type="button" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-black"
+               data-modal-hide="modalBayar">Batal</button>
+     </div>
+   </form>
+ </div>
+</div>
+</div>
+<script>
+  const modalBayar = document.getElementById('modalBayar');
+  const formBayar = document.getElementById('formBayar');
+  const inputId = document.getElementById('modalIdTagihan');
+  const spanNama = document.getElementById('modalNama');
+  const spanTagihan = document.getElementById('modalTagihan');
+
+  document.querySelectorAll('[data-modal-target="modalBayar"]').forEach(button => {
+    button.addEventListener('click', () => {
+      const id = button.getAttribute('data-id');
+      const nama = button.getAttribute('data-nama');
+      const tagihan = button.getAttribute('data-tagihan');
+
+      inputId.value = id;
+      spanNama.textContent = nama;
+      spanTagihan.textContent = tagihan;
+
+      formBayar.action = `/tagihan/bayar/${id}`;  // sesuaikan dengan Flask route
+    });
+  });
+</script>
+
+  <!-- Inisialisasi DataTables -->
+  <script>
+    $(document).ready(function() {
+      $('#tabelTagihan').DataTable({
+        "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
+        $('td:eq(0)', nRow).html(iDisplayIndexFull +1);
+      },
+        initComplete: function () {
+          this.api().columns([3, 4, 5]).every(function () { // Paket, Status Pelanggan, Status Tagihan
+            var column = this;
+            var select = $('<select><option value="">🔍 Filter</option></select>')
+              .appendTo($(column.header()))
+              .on('change', function () {
+                var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                column.search(val ? '^'+val+'$' : '', true, false).draw();
+              });
+              var values = [];
+              column.nodes().to$().each(function () {
+                var text = $(this).text().trim();
+                if (text && values.indexOf(text) === -1) {
+                  values.push(text);
+                }
+              });
+              values.sort().forEach(function (d) {
+                select.append('<option value="' + d + '">' + d + '</option>');
+              });
+          });
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
