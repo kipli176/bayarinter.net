@@ -365,6 +365,14 @@ def suspen_pelanggan(id):
     conn = get_db()
     c = conn.cursor()
 
+    c.execute("SELECT * FROM pelanggan WHERE id = ? AND id_admin = ? AND id_petugas is not null", (id, session['admin_id']))
+    petugase = c.fetchone()
+
+    if not petugase:
+        conn.close()
+        flash('Pelanggan ini belum ada petugasnya.', 'error')
+        return redirect(url_for('pelanggan.pelanggan'))
+    
     c.execute("SELECT * FROM pelanggan WHERE id = ? AND id_admin = ?", (id, session['admin_id']))
     pelanggan = c.fetchone()
 

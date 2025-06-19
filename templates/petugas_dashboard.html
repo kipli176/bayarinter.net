@@ -123,11 +123,11 @@
                   {% endif %}
           
                   {% if item.id_tagihan and item.status_pembayaran != 'lunas' and item.status_pelanggan_terkini != 'suspen' %}
-                    <form action="{{ url_for('petugas.suspen', id_tagihan=item.id_tagihan) }}" method="POST"
+                    <!--form action="{{ url_for('petugas.suspen', id_tagihan=item.id_tagihan) }}" method="POST"
                           onsubmit="return confirm('Suspend pelanggan ini?');"
                           class="inline-block">
                       <button type="submit" class="text-red-600 hover:scale-110 transition" title="Suspen">⛔</button>
-                    </form>
+                    </form-->
                   {% endif %}
                   <!-- Kirim Notifikasi -->
                 {% if item.status_pembayaran != 'lunas' and item.id_tagihan %}
@@ -141,11 +141,11 @@
                 </form>
                 {% endif %}
                 {% if item.status_pelanggan_terkini == 'suspen' %}
-                <form method="POST" action="{{ url_for('petugas.aktifkan_pelanggan_petugas', id_pelanggan=p.id_pelanggan) }}"
+                <!--form method="POST" action="{{ url_for('petugas.aktifkan_pelanggan_petugas', id_pelanggan=p.id_pelanggan) }}"
                       onsubmit="return confirm('Aktifkan kembali pelanggan ini?');"
                       class="inline">
                   <button type="submit" class="text-green-600 hover:scale-110 transition" title="Aktifkan">✅</button>
-                </form>
+                </form-->
                 {% endif %}
                 
                 </td>
