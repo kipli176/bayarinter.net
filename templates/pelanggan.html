@@ -86,7 +86,9 @@
             <td class="px-4 py-2">{{ p.nama_petugas or 'None' }}</td>
             <td class="px-4 py-2">{{ p.status }}</td>
             <td class="px-4 py-2">
-              {% if status_koneksi[p.ppp_username] == 'online' %}
+              {% if p.status == 'suspen' %}
+                <span class="text-red-600 font-medium">Suspended</span>
+              {% elif status_koneksi[p.ppp_username] == 'online' %} 
                 <span class="text-green-600 font-medium">Online</span>
               {% else %}
                 <span class="text-gray-500">Offline</span>
